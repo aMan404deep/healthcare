@@ -2,31 +2,41 @@ import User from "../models/userModel.js";
 import Doctor from "../models/DoctorModel.js"; // Assuming you have a Doctor model
 
 export const addDoctor = async (req, res) => {
-    try {
-      const { name, specialty, phone, address, email } = req.body;
-      
-      // Check if the doctor already exists
-      const doctorExists = await Doctor.findOne({ phone });
-      if (doctorExists) {
-        return res.status(400).json({ message: "Doctor with this phone number already exists." });
-      }
-  
-      // Create and save the new doctor
-      const newDoctor = new Doctor({
-        name,
-        specialty,
-        phone,
-        address,
-        email,
-      });
-  
-      await newDoctor.save();
-  
-      return res.status(201).json({ message: "Doctor added successfully", newDoctor });
-    } catch (err) {
-      return res.status(500).json({ message: "Failed to add doctor", error: err.message });
+  try {
+    const {
+      name,
+      specialty,
+      phone,
+      address,
+      email,
+      city,
+      profileImage,
+      rating,
+    } = req.body;
+
+    const doctorExists = await Doctor.findOne({ phone });
+    if (doctorExists) {
+      return res.status(400).json({ message: "Doctor already exists" });
     }
-  };
+
+    const newDoctor = new Doctor({
+      name,
+      specialty,
+      phone,
+      address,
+      email,
+      city,
+      profileImage,
+      rating,
+    });
+
+    await newDoctor.save();
+    return res.status(201).json({ message: "Doctor added successfully", newDoctor });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to add doctor", error: err.message });
+  }
+};
+
 
   
 export const getAssignedPatients = async (req, res) => {

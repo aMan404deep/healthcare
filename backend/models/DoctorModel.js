@@ -2,38 +2,24 @@ import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    specialty: {
-      type: String,
-      required: true,
-    },
-    phone: {
-      type: String,
-      required: true,
-      unique: true, // Ensures no duplicate phone numbers
-    },
-    address: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true, // Ensure no duplicate emails
-    },
+    name: { type: String, required: true },
+    specialty: { type: String, required: true },
+    phone: { type: String, required: true, unique: true },
+    address: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
     status: {
       type: String,
       enum: ["active", "inactive"],
-      default: "active", // Default status
+      default: "active",
     },
     availability: {
       type: String,
       enum: ["available", "unavailable"],
-      default: "available", // Default availability
+      default: "available",
     },
+    city: { type: String, default: "Unknown" }, // NEW
+    profileImage: { type: String, default: "/default-doctor.jpg" }, // NEW
+    rating: { type: Number, default: 4 }, // NEW (can be float like 4.3, 3.7, etc.)
   },
   { timestamps: true }
 );

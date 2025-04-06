@@ -11,7 +11,6 @@ import patientRoutes from "./routes/patientRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import cloudinaryRoutes from "./routes/cloudinaryRoutes.js";
-import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
 
 dotenv.config();

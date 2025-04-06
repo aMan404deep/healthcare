@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema(
       enum: ["patient", "doctor", "admin", "lab"], 
       required: true 
     },
-    phone: { type: String, required: true, unique: true },
     otp: { type: String },
     otpExpires: { type: Date },
     assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // For patients

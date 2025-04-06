@@ -23,10 +23,14 @@ export const sendEmailOtp = async (email, otp) => {
   return transporter.sendMail(mailOptions);
 };
 
-export const sendSmsOtp = async (phone, otp) => {
-  return twilioClient.messages.create({
-    body: `Your OTP code is ${otp}. It expires in 5 minutes.`,
-    from: process.env.TWILIO_PHONE_NUMBER,
-    to: phone,
-  });
-};
+// export const sendSmsOtp = async (phone, otp) => {
+//   if (!phone) {
+//     console.error("⚠️ Phone number is missing when sending SMS OTP.");
+//     throw new Error("Phone number is required to send OTP.");
+//   }
+//   return twilioClient.messages.create({
+//     body: `Your OTP code is ${otp}. It expires in 5 minutes.`,
+//     from: process.env.TWILIO_PHONE_NUMBER,
+//     to: phone,
+//   });
+// };
