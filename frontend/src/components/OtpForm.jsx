@@ -1,19 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Check, RefreshCw, AlertCircle, Shield } from 'lucide-react';
 
 const OtpForm = () => {
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(300); // 5 minutes in seconds
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // Timer for OTP expiry
+  useEffect(() => {
+    if (remainingTime <= 0) return;
+    
+    const timer = setInterval(() => {
+      setRemainingTime(prev => Math.max(0, prev - 1));
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [remainingTime]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  const handleOtpChange = (index, value) => {
+    // Only allow numbers
+    if (value && !/^\d*$/.test(value)) return;
+    
+    // Update the OTP array
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    
+    // Auto-focus next input field if current field is filled
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+    
+    // Clear error on input change
+    setError(null);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
+
+    const otpValue = otp.join("");
+    if (otpValue.length !== 6) {
+      setError("Please enter the complete 6-digit OTP");
+      setIsLoading(false);
+      return;
+    }
 
     const token = localStorage.getItem("token");
 
@@ -26,7 +72,7 @@ const OtpForm = () => {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/verify-otp",
-        { otp },
+        { otp: otpValue },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +125,8 @@ const OtpForm = () => {
         }
       );
       
-      // Show success message
+      // Reset timer and show success message
+      setRemainingTime(300);
       setError("OTP sent successfully to your email!");
     } catch (err) {
       console.error(err);
@@ -92,43 +139,68 @@ const OtpForm = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4 text-center">Enter OTP</h2>
-        <p className="text-gray-600 mb-4 text-center">
-          Please enter the OTP sent to your email
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+          error.includes("sent successfully") 
+            ? "bg-green-50 text-green-700" 
+            : "bg-red-50 text-red-700"
+        }`}>
+          <AlertCircle className="w-5 h-5" />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      <div>
+        <p className="text-slate-600 mb-3 text-center">Enter 6-digit verification code sent to your email</p>
+        <div className="flex justify-center gap-2 mb-1">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              id={`otp-input-${index}`}
+              type="text"
+              value={digit}
+              onChange={(e) => handleOtpChange(index, e.target.value)}
+              maxLength={1}
+              className="w-12 h-14 text-xl font-semibold text-center bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+            />
+          ))}
+        </div>
+        <div className="text-center text-sm text-slate-500">
+          {remainingTime > 0 ? (
+            <span>Code expires in {formatTime(remainingTime)}</span>
+          ) : (
+            <span className="text-red-500">Code expired. Please request a new one.</span>
+          )}
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        disabled={isLoading || otp.join("").length !== 6}
+        className="group relative w-full px-6 py-3 rounded-xl font-medium transition-all duration-300 overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-cyan-600 transition-transform group-hover:scale-105" />
+        <div className="relative flex items-center justify-center gap-2 text-white">
+          <span>{isLoading ? "Verifying..." : "Verify OTP"}</span>
+          {!isLoading && (
+            <Check className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          )}
+        </div>
+      </button>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Enter OTP"
-            className="w-full border p-2 rounded mb-4"
-            required
-          />
-
-          {error && <p className={`text-sm mb-4 ${error.includes("sent successfully") ? "text-green-500" : "text-red-500"}`}>{error}</p>}
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition mb-2"
-            disabled={isLoading}
-          >
-            {isLoading ? "Verifying..." : "Verify OTP"}
-          </button>
-        </form>
-
+      <div className="flex justify-center">
         <button
+          type="button"
           onClick={handleResendOtp}
-          className="w-full bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition mt-2"
-          disabled={isLoading}
+          disabled={isLoading || remainingTime > 0}
+          className="flex items-center justify-center gap-2 text-teal-600 hover:text-teal-700 disabled:text-slate-400 transition-colors px-3 py-2"
         >
-          {isLoading ? "Processing..." : "Resend OTP"}
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>{isLoading ? "Sending..." : "Resend OTP"}</span>
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 
